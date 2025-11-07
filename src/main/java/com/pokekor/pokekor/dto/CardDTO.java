@@ -13,7 +13,7 @@ public class CardDTO {
     private String cardImageUrl;
     private String cardNumberInPack;
     private String packName; // Pack 엔티티의 packNameKo
-    private String rarityName; // Rarity 엔티티의 rarityName
+    private String rarityId; // Rarity 엔티티의 rarityName
 
     // Card 엔티티를 CardDTO로 변환하는 생성자
     public CardDTO(Card card) {
@@ -27,7 +27,7 @@ public class CardDTO {
             this.packName = card.getPack().getPackNameKo();
         }
         if (card.getRarity() != null) {
-            this.rarityName = card.getRarity().getRarityName();
+            this.rarityId = card.getRarity().getRarityId();
         }
     }
 }

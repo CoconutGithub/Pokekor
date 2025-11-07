@@ -4,7 +4,7 @@ export interface CardDTO {
     cardImageUrl?: string;
     cardNumberInPack: string;
     packName: string;
-    rarityName: string;
+    rarityId: string;
 }
 
 /**

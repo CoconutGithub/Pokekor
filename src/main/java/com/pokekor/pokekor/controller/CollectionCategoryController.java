@@ -79,6 +79,55 @@ public class CollectionCategoryController {
     }
 
     /**
+     * [추가됨] 특정 카테고리 정보 수정
+     * PUT /api/my-collections/{categoryId}
+     */
+    @PutMapping("/{categoryId}")
+    public ResponseEntity<?> updateCategory(
+            @PathVariable Long categoryId,
+            @RequestBody CategoryCreateRequestDTO requestDTO, // [수정] 생성 DTO 재사용
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        try {
+            String username = userDetails.getUsername();
+            CollectionCategoryDTO updatedCategory = collectionCategoryService.updateCategory(categoryId, requestDTO, username);
+            return ResponseEntity.ok(updatedCategory); // 성공 시 200 OK와 수정된 DTO 반환
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (AccessDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("서버 오류: " + e.getMessage());
+        }
+    }
+
+    /**
+     * [추가됨] 특정 카테고리 삭제
+     * DELETE /api/my-collections/{categoryId}
+     */
+    @DeleteMapping("/{categoryId}")
+    public ResponseEntity<?> deleteCategory(
+            @PathVariable Long categoryId,
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        try {
+            String username = userDetails.getUsername();
+            collectionCategoryService.deleteCategory(categoryId, username);
+
+            // 성공 시 200 OK와 메시지 반환
+            return ResponseEntity.ok(Map.of("message", "카테고리가 성공적으로 삭제되었습니다."));
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (AccessDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("서버 오류: " + e.getMessage());
+        }
+    }
+
+    /**
      * [추가됨] 특정 카테고리에 카드 추가 (수집)
      * POST /api/my-collections/{categoryId}/cards
      *

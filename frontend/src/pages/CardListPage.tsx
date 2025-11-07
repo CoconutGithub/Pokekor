@@ -112,7 +112,7 @@ export const CardListPage = () => {
             console.error("수집 실패:", err);
             if (err.response && err.response.data) {
                 const message = typeof err.response.data === 'string' ? err.response.data : err.response.data.message;
-                setCollectStatus(`오류: ${message || '알 수 없는 오류'}`);
+                setCollectStatus(`X: ${message || '알 수 없는 오류'}`);
             } else {
                 setCollectStatus("수집에 실패했습니다.");
             }
@@ -247,7 +247,7 @@ export const CardListPage = () => {
                                         {collectStatus && (
                                             <p style={{
                                                 fontSize: '12px',
-                                                color: collectStatus.startsWith('오류') ? 'red' : 'green',
+                                                color: collectStatus.startsWith('X') ? 'red' : 'green',
                                                 margin: '5px 0 0 0'
                                             }}>
                                                 {collectStatus}

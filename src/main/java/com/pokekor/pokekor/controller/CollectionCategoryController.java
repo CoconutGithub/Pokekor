@@ -119,4 +119,33 @@ public class CollectionCategoryController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("서버 오류가 발생했습니다: " + e.getMessage());
         }
     }
+
+    /**
+     * [추가됨] 특정 카테고리에서 카드 제거 (수집 해제)
+     * DELETE /api/my-collections/{categoryId}/cards/{cardId}
+     */
+    @DeleteMapping("/{categoryId}/cards/{cardId}")
+    public ResponseEntity<?> removeCardFromCategory(
+            @PathVariable Long categoryId,
+            @PathVariable Long cardId,
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        try {
+            String username = userDetails.getUsername();
+            collectedCardService.removeCardFromCategory(categoryId, cardId, username);
+
+            // 성공 시 200 OK (또는 204 No Content) 와 메시지 반환
+            return ResponseEntity.ok(Map.of("message", "카드가 컬렉션에서 제거되었습니다."));
+
+        } catch (IllegalArgumentException e) {
+            // 제거할 카드가 없는 경우
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (AccessDeniedException e) {
+            // 권한이 없는 경우
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        } catch (Exception e) {
+            // 기타 서버 오류
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("서버 오류: " + e.getMessage());
+        }
+    }
 }

@@ -1,47 +1,32 @@
-// [수정] React의 useState, useEffect 외에 Fragment를 import합니다. (필수는 아님)
+// (기존 코드와 동일)
 import { useState, useEffect, Fragment } from 'react';
-// [수정] useAuth 훅을 ../App에서 가져옵니다.
 import { useAuth } from '../App';
-// [수정] CardDTO 외에, 사용자의 카테고리 목록을 담을 CollectionCategoryDTO 타입을 import합니다.
 import type { CardDTO, CollectionCategoryDTO } from '../types';
 
-// [수정] 컴포넌트 이름 변경 (기존: CardListPage)
 export const CardListPage = () => {
-    // [수정] useAuth()를 호출하여 api 객체와 user 정보를 가져옵니다.
-    const { api, user } = useAuth(); // user가 null이면 비로그인, null이 아니면 로그인 상태
+    // (기존 코드와 동일 ... )
+    const { api, user } = useAuth();
     const [cards, setCards] = useState<CardDTO[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-
-    // [추가됨] 사용자의 컬렉션 카테고리 목록을 저장할 state
     const [categories, setCategories] = useState<CollectionCategoryDTO[]>([]);
-
-    // [추가됨] 현재 수집을 위해 "선택된" 카드의 ID를 저장할 state
-    // (예: 5번 카드의 '수집' 버튼을 누르면 이 state는 5가 됩니다)
     const [selectedCardId, setSelectedCardId] = useState<number | null>(null);
-
-    // [추가됨] 카테고리 드롭다운에서 선택된 categoryId를 저장할 state
-    const [targetCategoryId, setTargetCategoryId] = useState<string>(''); // string으로 관리하여 <select> 제어
-
-    // [추가됨] 카드 수집 API 호출 시 발생하는 에러/상태 메시지
+    const [targetCategoryId, setTargetCategoryId] = useState<string>('');
     const [collectStatus, setCollectStatus] = useState<string | null>(null);
 
-    // (기존과 동일)
+    // (기존 코드와 동일 ... )
     useEffect(() => {
         const fetchAllData = async () => {
             try {
                 setLoading(true);
                 setError(null);
 
-                // 1. (기존) 카드 목록 조회
                 const cardsResponse = await api.get<CardDTO[]>('/cards');
                 setCards(cardsResponse.data);
 
-                // 2. [추가됨] 로그인한 사용자(user)가 있다면, 카테고리 목록도 조회
                 if (user) {
                     const categoryResponse = await api.get<CollectionCategoryDTO[]>('/my-collections');
                     setCategories(categoryResponse.data);
-                    // 카테고리가 1개 이상 있다면, 첫 번째 카테고리를 기본 선택으로 설정
                     if (categoryResponse.data.length > 0) {
                         setTargetCategoryId(String(categoryResponse.data[0].categoryId));
                     }
@@ -56,44 +41,39 @@ export const CardListPage = () => {
         };
 
         fetchAllData();
-        // [수정] 의존성 배열에 'user'를 추가합니다. (로그인/로그아웃 시 재실행)
     }, [api, user]);
 
-    // [추가됨] '수집' 버튼 클릭 시 호출되는 핸들러
+    // (기존 코드와 동일 ... )
     const handleCollectClick = (cardId: number) => {
-        setSelectedCardId(cardId); // 현재 선택한 카드 ID를 state에 저장
-        setCollectStatus(null); // 이전 에러 메시지 초기화
-
-        // 사용자의 카테고리가 존재하고, 기본 선택이 설정되지 않았다면 첫 번째 항목을 강제로 설정
+        setSelectedCardId(cardId);
+        setCollectStatus(null);
         if (categories.length > 0 && targetCategoryId === '') {
             setTargetCategoryId(String(categories[0].categoryId));
         }
     };
 
-    // [추가됨] '취소' 버튼 클릭 시 호출되는 핸들러
+    // (기존 코드와 동일 ... )
     const handleCancelClick = () => {
-        setSelectedCardId(null); // 선택 취소
-        setCollectStatus(null); // 에러 메시지 초기화
+        setSelectedCardId(null);
+        setCollectStatus(null);
     };
 
-    // [추가됨] '확인' (수집) 버튼 클릭 시 호출되는 핸들러
+    // (기존 코드와 동일 ... )
     const handleConfirmCollect = async () => {
-        if (!selectedCardId) return; // 선택된 카드가 없으면 중단
+        if (!selectedCardId) return;
         if (targetCategoryId === '') {
             setCollectStatus("추가할 카테고리를 선택하세요.");
             return;
         }
 
-        setCollectStatus("수집 중..."); // 로딩 상태 표시
+        setCollectStatus("수집 중...");
 
         try {
-            // 백엔드 API 호출
             await api.post(`/my-collections/${targetCategoryId}/cards`, {
-                cardId: selectedCardId // DTO { "cardId": 123 }
+                cardId: selectedCardId
             });
 
             setCollectStatus("수집 성공!");
-            // 1초 뒤에 UI를 원래대로 되돌림
             setTimeout(() => {
                 setSelectedCardId(null);
                 setCollectStatus(null);
@@ -101,7 +81,6 @@ export const CardListPage = () => {
 
         } catch (err: any) {
             console.error("수집 실패:", err);
-            // 백엔드에서 보낸 에러 메시지 (예: "이미 수집된 카드")
             if (err.response && err.response.data) {
                 setCollectStatus(`오류: ${err.response.data.message || err.response.data}`);
             } else {
@@ -110,8 +89,7 @@ export const CardListPage = () => {
         }
     };
 
-
-    // (기존과 동일)
+    // (기존 코드와 동일 ... )
     if (loading) {
         return <div>카드 목록을 불러오는 중...</div>;
     }
@@ -122,10 +100,10 @@ export const CardListPage = () => {
 
     return (
         <div>
+            {/* (기존 코드와 동일 ... ) */}
             <h1>전체 카드 목록</h1>
             <p>총 {cards.length}장의 카드가 있습니다.</p>
 
-            {/* [추가됨] 로그인했지만 카테고리가 없는 경우 안내 메시지 */}
             {user && categories.length === 0 && (
                 <div style={{ padding: '10px', backgroundColor: '#fff3cd', color: '#856404', border: '1px solid #ffeeba', marginBottom: '15px' }}>
                     '내 컬렉션' 페이지에서 카테고리(앨범)를 1개 이상 생성해야 카드를 수집할 수 있습니다.
@@ -134,39 +112,67 @@ export const CardListPage = () => {
 
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
                 {cards.map(card => (
+                    // [수정] 카드 아이템 div에 flex-column 스타일 적용
                     <div key={card.cardId} style={{
                         border: '1px solid #ccc',
                         padding: '10px',
                         width: '200px',
-                        backgroundColor: '#f9f9f9'
+                        backgroundColor: '#f9f9f9',
+                        // [수정] 1. 카드 박스 자체를 flex-column으로 만듭니다.
+                        display: 'flex',
+                        flexDirection: 'column'
                     }}>
-                        {/* [수정됨] 카드 정보 렌더링 부분 (기존과 거의 동일)
-                          - (이미지, 이름, 팩, 레어도는 그대로)
-                        */}
-                        <img
-                            src={card.cardImageUrl}
-                            alt={card.cardName}
-                            style={{ width: '100%', height: 'auto', objectFit: 'contain' }}
-                            onError={(e) => (e.currentTarget.src = 'https://via.placeholder.com/150?text=No+Image')}
-                        />
-                        <h4 style={{ marginTop: '8px', marginBottom: '4px', fontSize: '16px', color: '#555'  }}>
-                            {card.cardName}
-                        </h4>
-                        <p style={{ margin: 0, fontSize: '14px', color: '#555' }}>
-                            {card.packName}
-                        </p>
-                        <p style={{ margin: 0, fontSize: '12px', color: '#777' }}>
-                            {card.rarityId} ({card.cardNumberInPack})
-                        </p>
 
-                        {/* [수정됨] 수집 버튼 및 수집 UI 로직
-                          - 1. 로그인한 사용자(user)에게만 이 영역이 보입니다.
-                          - 2. 이 카드가 "선택된" 카드(selectedCardId)인지 확인합니다.
-                        */}
+                        {/* [수정] 2. 이미지를 고정 높이(260px) 컨테이너로 감쌉니다. */}
+                        <div style={{
+                            width: '100%',
+                            height: '260px', // [수정] 이미지 영역 높이 고정
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            marginBottom: '8px' // [수정] 텍스트와 여백
+                        }}>
+                            <img
+                                src={card.cardImageUrl}
+                                alt={card.cardName}
+                                // [수정] 이미지가 컨테이너를 넘지 않도록 max-width/height 설정
+                                style={{
+                                    maxWidth: '100%',
+                                    maxHeight: '100%',
+                                    objectFit: 'contain'
+                                }}
+                                onError={(e) => (e.currentTarget.src = 'https://via.placeholder.com/150?text=No+Image')}
+                            />
+                        </div>
+
+                        {/* [수정] 3. 텍스트 영역을 div로 묶습니다. */}
+                        <div>
+                            <h4 style={{
+                                margin: '0 0 4px 0', // [수정] 마진 조정
+                                fontSize: '16px',
+                                color: '#213547',
+                                // [수정] 카드 이름이 2줄일 경우를 대비해 최소 높이 고정 (16px * 1.5 line-height * 2줄 = 48px)
+                                minHeight: '3em'
+                            }}>
+                                {card.cardName}
+                            </h4>
+                            <p style={{ margin: 0, fontSize: '14px', color: '#555' }}>
+                                {card.packName}
+                            </p>
+                            {/* [수정] 오타 수정 (rarityId -> rarityName) */}
+                            <p style={{ margin: 0, fontSize: '12px', color: '#777' }}>
+                                {card.rarityId} ({card.cardNumberInPack})
+                            </p>
+                        </div>
+
                         {user && (
-                            <div style={{ marginTop: '10px' }}>
+                            // [수정] 4. 버튼 영역에 'marginTop: auto'를 적용해 맨 아래로 밀어냅니다.
+                            <div style={{
+                                marginTop: 'auto', // [수정] 이 영역을 flex 컨테이너의 맨 아래로 밀어냄
+                                paddingTop: '10px'  // [수정] 위 텍스트 영역과의 최소 여백
+                            }}>
                                 {selectedCardId === card.cardId ? (
-                                    // [추가됨] '수집' 버튼을 누른 후 (선택된 상태)
+                                    // (기존 코드와 동일)
                                     <Fragment>
                                         <select
                                             value={targetCategoryId}
@@ -182,7 +188,6 @@ export const CardListPage = () => {
                                         <button onClick={handleConfirmCollect} style={{ width: '50%' }}>확인</button>
                                         <button onClick={handleCancelClick} style={{ width: '50%' }}>취소</button>
 
-                                        {/* [추가됨] 수집 API 상태 메시지 표시 */}
                                         {collectStatus && (
                                             <p style={{
                                                 fontSize: '12px',
@@ -194,10 +199,9 @@ export const CardListPage = () => {
                                         )}
                                     </Fragment>
                                 ) : (
-                                    // [추가됨] 기본 '수집' 버튼 (선택되지 않은 상태)
+                                    // (기존 코드와 동일)
                                     <button
                                         onClick={() => handleCollectClick(card.cardId)}
-                                        // 카테고리가 0개이면 버튼 비활성화
                                         disabled={categories.length === 0}
                                         style={{ width: '100%' }}
                                     >

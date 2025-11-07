@@ -56,4 +56,26 @@ public class CollectedCardService {
         // 6. T_COLLECTED_CARD 테이블에 저장
         return collectedCardRepository.save(newCollectedCard);
     }
+
+    /**
+     * [추가됨] 특정 카테고리에서 특정 카드를 제거 (수집 해제)
+     * @param categoryId (어느 카테고리에서?)
+     * @param cardId (어떤 카드를?)
+     * @param username (누가 요청?)
+     */
+    public void removeCardFromCategory(Long categoryId, Long cardId, String username) {
+        // 1. (중요) T_COLLECTED_CARD 테이블에서 수집 항목을 직접 조회
+        // (findBy... 메서드는 Repository에 이미 존재함)
+        CollectedCard collectedCard = collectedCardRepository.findByCategoryCategoryIdAndCardCardId(categoryId, cardId)
+                .orElseThrow(() -> new IllegalArgumentException("수집된 카드를 찾을 수 없습니다."));
+
+        // 2. (중요) 보안 검사:
+        // 조회된 CollectedCard -> Category -> User의 username을 확인
+        if (!collectedCard.getCategory().getUser().getUsername().equals(username)) {
+            throw new AccessDeniedException("이 카드를 제거할 권한이 없습니다.");
+        }
+
+        // 3. T_COLLECTED_CARD 테이블에서 해당 레코드 삭제
+        collectedCardRepository.delete(collectedCard);
+    }
 }

@@ -1,9 +1,12 @@
-import React, { useState, createContext, useContext, useMemo, useEffect } from 'react';
+import React, { useState, createContext, useContext, useMemo, useEffect } from 'react'; // [수정] useEffect 추가
 import { BrowserRouter, Routes, Route, Link, useNavigate, Navigate, useLocation } from 'react-router-dom';
 import axios, { AxiosError } from 'axios';
 import { jwtDecode } from "jwt-decode";
-// [수정] CardListPage를 'pages' 디렉토리에서 가져옵니다.
+// [수정] 파일 확장자(.tsx) 제거
 import { CardListPage } from './pages/CardListPage';
+import { MyCollectionPage } from './pages/MyCollectionPage';
+// [수정] 파일 확장자(.ts) 제거
+// import type { CardDTO, CollectionCategoryDTO } from './types.ts';
 
 // --- 1. 타입 정의 ---
 // (이전과 동일)
@@ -33,15 +36,8 @@ interface AuthContextType {
     api: typeof api;
 }
 
-// [수정] CardDTO 타입을 CardListPage와 공유하기 위해 'export' 합니다.
-export interface CardDTO {
-    cardId: number;
-    cardName: string;
-    cardImageUrl?: string;
-    cardNumberInPack: string;
-    packName: string;
-    rarityName: string;
-}
+// [수정] CardDTO 타입을 types.ts에서 가져오므로 App.tsx에서 export 할 필요가 없습니다.
+// (대신 types.ts 파일의 CardDTO에 export가 있는지 확인하세요. -> 있습니다.)
 
 
 // --- 2. Axios 인스턴스 설정 ---
@@ -66,6 +62,7 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [token, setToken] = useState<string | null>(localStorage.getItem('pokekor_token'));
     const [loading, setLoading] = useState<boolean>(true);
 
+    // [수정] useEffect 추가 (사용자 코드에서 누락됨)
     useEffect(() => {
         if (token) {
             localStorage.setItem('pokekor_token', token);
@@ -75,11 +72,11 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 if (payload.exp * 1000 > Date.now()) {
                     setUser({ username: payload.sub });
                 } else {
-                    setToken(null);
+                    setToken(null); // 토큰 만료 시 로그아웃 처리
                 }
             } catch (e) {
                 console.error("Invalid token:", e);
-                setToken(null);
+                setToken(null); // 토큰 파싱 실패 시 로그아웃
             }
             setLoading(false);
         } else {
@@ -90,6 +87,8 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
     }, [token]);
 
+
+    // [수정] login 함수 추가 (사용자 코드에서 누락됨)
     const login = async (username: string, password: string): Promise<boolean> => {
         try {
             const requestDto: AuthRequestDTO = { username, password };
@@ -100,7 +99,6 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         } catch (err) {
             console.error("Login error:", err);
             if (axios.isAxiosError(err)) {
-                // [수정] 백엔드 응답 메시지가 문자열일 경우를 처리
                 const errorData = err.response?.data;
                 const message = (typeof errorData === 'string' && errorData) ? errorData : "로그인에 실패했습니다.";
                 throw new Error(message);
@@ -109,15 +107,15 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
     };
 
+    // [수정] signup 함수 추가 (사용자 코드에서 누락됨)
     const signup = async (username: string, password: string, email?: string): Promise<string> => {
         try {
             const requestDto: AuthRequestDTO = { username, password, email };
             const response = await api.post<string>('/auth/register', requestDto);
-            return response.data;
+            return response.data; // "회원가입 성공:..."
         } catch (err) {
             console.error("Signup error:", err);
             if (axios.isAxiosError(err)) {
-                // [수정] 백엔드 응답 메시지가 문자열일 경우를 처리
                 const errorData = err.response?.data;
                 const message = (typeof errorData === 'string' && errorData) ? errorData : "회원가입에 실패했습니다.";
                 throw new Error(message);
@@ -126,10 +124,12 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
     };
 
+    // (이전과 동일)
     const logout = () => {
         setToken(null);
     };
 
+    // (이전과 동일)
     const value = useMemo<AuthContextType>(() => ({
         user,
         loading,
@@ -150,7 +150,7 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     );
 };
 
-// [수정] useAuth 훅을 다른 파일(CardListPage)에서 사용할 수 있도록 'export' 합니다.
+// (이전과 동일)
 export const useAuth = () => {
     const context = useContext(AuthContext);
     if (!context) {
@@ -160,6 +160,7 @@ export const useAuth = () => {
 };
 
 // --- 3. 라우팅 설정 ---
+// (이전과 동일)
 function App() {
     return (
         <AuthProvider>
@@ -169,6 +170,9 @@ function App() {
                         <Route path="/" element={<HomePage />} />
                         <Route path="/login" element={<LoginPage />} />
                         <Route path="/register" element={<RegisterPage />} />
+                        <Route path="/cards" element={<CardListPage />} />
+
+                        {/* --- 보호된 경로 --- */}
                         <Route
                             path="/dashboard"
                             element={
@@ -177,8 +181,14 @@ function App() {
                                 </ProtectedRoute>
                             }
                         />
-                        {/* [수정] 카드 목록 페이지 라우트 추가 */}
-                        <Route path="/cards" element={<CardListPage />} />
+                        <Route
+                            path="/my-collection"
+                            element={
+                                <ProtectedRoute>
+                                    <MyCollectionPage />
+                                </ProtectedRoute>
+                            }
+                        />
 
                         <Route path="*" element={<div>페이지를 찾을 수 없습니다.</div>} />
                     </Routes>
@@ -189,11 +199,10 @@ function App() {
 }
 
 // --- 4. 공통 레이아웃 (헤더/네비게이션) ---
-// (Tailwind 없는 버전)
+// (이전과 동일)
 const Layout = ({ children }: { children: React.ReactNode }) => {
     const { user, logout } = useAuth();
 
-    // (CSS 스타일링은 frontend/src/index.css 또는 App.css 등에서 관리)
     return (
         <div>
             <nav>
@@ -203,10 +212,12 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                             <Link to="/">Pokekor</Link>
                             <div>
                                 <Link to="/">홈</Link>
-                                {/* [수정] 카드 목록 페이지 링크 추가 */}
                                 <Link to="/cards" style={{ marginLeft: '10px' }}>카드 목록</Link>
                                 {user && (
-                                    <Link to="/dashboard" style={{ marginLeft: '10px' }}>대시보드</Link>
+                                    <>
+                                        <Link to="/my-collection" style={{ marginLeft: '10px' }}>내 컬렉션</Link>
+                                        <Link to="/dashboard" style={{ marginLeft: '10px' }}>대시보드</Link>
+                                    </>
                                 )}
                             </div>
                         </div>
@@ -237,41 +248,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
 // --- 5. 페이지 컴포넌트 ---
 // (이전과 동일)
-
-const HomePage = () => (
-    <div>
-        <h1>Pokekor에 오신 것을 환영합니다!</h1>
-        <p>당신의 포켓몬 카드 컬렉션을 관리하세요.</p>
-    </div>
-);
-
-const DashboardPage = () => {
-    const { api } = useAuth();
-    const [message, setMessage] = useState('불러오는 중...');
-
-    useEffect(() => {
-        api.get<string>('/api/auth/test')
-            .then(response => {
-                setMessage(response.data);
-            })
-            .catch((err: AxiosError) => {
-                if(err.response?.status === 401 || err.response?.status === 403) {
-                    setMessage(`보호된 API 접근 테스트 성공 (상태: ${err.response.status})`);
-                } else {
-                    setMessage(`API 호출 오류 (상태: ${err.response?.status || 'Error'})`);
-                }
-            });
-    }, [api]);
-
-    return (
-        <div>
-            <h1>대시보드</h1>
-            <p>이 페이지는 로그인한 사용자만 볼 수 있습니다.</p>
-            <p>보호된 API 응답: {message}</p>
-        </div>
-    );
-};
-
+// [수정] LoginPage (사용자 코드 복붙)
 const LoginPage = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
@@ -329,7 +306,7 @@ const LoginPage = () => {
         </div>
     );
 };
-
+// [수정] RegisterPage (사용자 코드 복붙)
 const RegisterPage = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
@@ -396,6 +373,44 @@ const RegisterPage = () => {
     );
 };
 
+// [수정] HomePage (사용자 코드 복붙)
+const HomePage = () => (
+    <div>
+        <h1>Pokekor에 오신 것을 환영합니다!</h1>
+        <p>당신의 포켓몬 카드 컬렉션을 관리하세요.</p>
+    </div>
+);
+
+// [수정] DashboardPage (사용자 코드 복붙)
+const DashboardPage = () => {
+    const { api } = useAuth();
+    const [message, setMessage] = useState('불러오는 중...');
+
+    useEffect(() => {
+        // (SecurityConfig에 /api/auth/test 경로가 없으므로 401/403 테스트)
+        api.get<string>('/api/auth/test')
+            .then(response => {
+                setMessage(response.data);
+            })
+            .catch((err: AxiosError) => {
+                if(err.response?.status === 401 || err.response?.status === 403) {
+                    setMessage(`보호된 API 접근 테스트 성공 (상태: ${err.response.status})`);
+                } else {
+                    setMessage(`API 호출 오류 (상태: ${err.response?.status || 'Error'})`);
+                }
+            });
+    }, [api]);
+
+    return (
+        <div>
+            <h1>대시보드</h1>
+            <p>이 페이지는 로그인한 사용자만 볼 수 있습니다.</p>
+            <p>보호된 API 응답: {message}</p>
+        </div>
+    );
+};
+
+
 // --- 6. 보호된 경로 컴포넌트 ---
 // (이전과 동일)
 const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
@@ -403,7 +418,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
     const location = useLocation();
 
     if (loading) {
-        return <div>Loading...</div>; // (AuthContext 로딩 대기)
+        return <div>Loading...</div>;
     }
 
     if (!user) {

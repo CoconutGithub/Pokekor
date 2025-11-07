@@ -1,33 +1,25 @@
-// [수정] 'React'는 사용되지 않으므로 import에서 제거 (TS6133 경고 해결)
 import { useState, useEffect } from 'react';
-// [수정] App.tsx의 상대 경로로 변경하고, 'type' 키워드로 CardDTO가 타입임을 명시
-import { useAuth, type CardDTO } from '../App';
+// [수정] import 경로를 './App' -> '../App' (상위 폴더)
+import { useAuth } from '../App';
+// [수정] import 경로를 './App' -> '../types' (types.ts 파일)
+import type { CardDTO } from '../types';
 
 export const CardListPage = () => {
-    // useAuth 훅을 사용해 Axios 인스턴스(api)를 가져옴
+    // (이전과 동일)
     const { api } = useAuth();
-
-    // 카드 목록 상태
     const [cards, setCards] = useState<CardDTO[]>([]);
-    // 로딩 상태
     const [loading, setLoading] = useState(true);
-    // 에러 상태
     const [error, setError] = useState<string | null>(null);
 
-    // 컴포넌트가 처음 마운트될 때 API 호출
+    // (이전과 동일)
     useEffect(() => {
-        // API 호출 함수 정의
         const fetchCards = async () => {
             try {
                 setLoading(true);
                 setError(null);
-
-                // 백엔드 GET /api/cards 호출
+                // [수정] api 경로 확인 (백엔드가 /api/cards 인지 /cards 인지 확인 -> /api/cards가 맞습니다)
                 const response = await api.get<CardDTO[]>('/cards');
-
-                // 성공 시 상태에 저장
                 setCards(response.data);
-
             } catch (err) {
                 console.error("카드 목록 조회 실패:", err);
                 setError("카드 목록을 불러오는 데 실패했습니다.");
@@ -35,12 +27,10 @@ export const CardListPage = () => {
                 setLoading(false);
             }
         };
+        fetchCards();
+    }, [api]);
 
-        fetchCards(); // 함수 실행
-    }, [api]); // api 객체가 변경될 때만 (사실상 한 번만) 실행
-
-    // --- 렌더링 ---
-
+    // (이전과 동일)
     if (loading) {
         return <div>카드 목록을 불러오는 중...</div>;
     }

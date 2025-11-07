@@ -2,9 +2,11 @@ package com.pokekor.pokekor.repository;
 
 import com.pokekor.pokekor.domain.CollectionCategory;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+@Repository
 public interface CollectionCategoryRepository extends JpaRepository<CollectionCategory, Long> {
     // 특정 사용자가 소유한 모든 카테고리를 찾는 기능
     // "SELECT * FROM T_COLLECTION_CATEGORY WHERE user_id = ?"

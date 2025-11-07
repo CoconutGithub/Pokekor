@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../App'; // useAuth 훅
 import type { CollectionCategoryDTO, CategoryCreateRequestDTO } from '../types'; // 타입
+import { Link } from 'react-router-dom';
 
 export const MyCollectionPage = () => {
     const { api } = useAuth();
@@ -127,14 +128,21 @@ export const MyCollectionPage = () => {
             ) : (
                 <ul style={{ listStyle: 'none', paddingLeft: 0 }}>
                     {categories.map(cat => (
-                        <li key={cat.categoryId} style={{
-                            padding: '10px',
-                            border: '1px solid #eee',
-                            marginBottom: '5px',
-                            borderLeft: `5px solid ${cat.themeColor || '#FFFFFF'}`
-                        }}>
-                            <strong>{cat.categoryName}</strong> ({cat.categoryType === 'OWNED' ? '보유' : '희망'})
-                        </li>
+                        <Link
+                            key={cat.categoryId}
+                            to={`/my-collection/${cat.categoryId}`} // [수정] 동적 경로로 이동
+                            style={{ textDecoration: 'none', color: 'inherit' }} // [수정] 링크 기본 스타일 제거
+                        >
+                            <li style={{
+                                padding: '10px',
+                                border: '1px solid #eee',
+                                marginBottom: '5px',
+                                borderLeft: `5px solid ${cat.themeColor || '#FFFFFF'}`,
+                                cursor: 'pointer' // [수정] 마우스 커서를 포인터로 변경
+                            }}>
+                                <strong>{cat.categoryName}</strong> ({cat.categoryType === 'OWNED' ? '보유' : '희망'})
+                            </li>
+                        </Link>
                     ))}
                 </ul>
             )}

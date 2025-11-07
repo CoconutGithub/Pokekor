@@ -25,3 +25,15 @@ export interface CategoryCreateRequestDTO {
     themeColor: string;
     categoryType: 'OWNED' | 'WISHLIST';
 }
+
+/**
+ * [추가됨] 백엔드 CollectionCategoryDetailDTO (상세 조회 응답용)
+ * (카테고리 정보 + 수집된 카드 목록)
+ */
+export interface CollectionCategoryDetailDTO {
+    categoryId: number;
+    categoryName: string;
+    themeColor: string;
+    categoryType: 'OWNED' | 'WISHLIST';
+    collectedCards: CardDTO[]; // 수집된 카드 목록이 여기에 포함됩니다.
+}

@@ -4,6 +4,7 @@ import com.pokekor.pokekor.domain.CollectedCard;
 import com.pokekor.pokekor.dto.CardCollectRequestDTO;
 import com.pokekor.pokekor.dto.CategoryCreateRequestDTO;
 import com.pokekor.pokekor.dto.CollectionCategoryDTO;
+import com.pokekor.pokekor.dto.CollectionCategoryDetailDTO;
 import com.pokekor.pokekor.service.CollectedCardService;
 import com.pokekor.pokekor.service.CollectionCategoryService;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +39,29 @@ public class CollectionCategoryController {
         String username = userDetails.getUsername();
         List<CollectionCategoryDTO> categories = collectionCategoryService.getCategoriesForUser(username);
         return ResponseEntity.ok(categories);
+    }
+
+    /**
+     * [추가됨] 특정 카테고리 상세 조회 (수집된 카드 목록 포함)
+     * GET /api/my-collections/{categoryId}
+     */
+    @GetMapping("/{categoryId}")
+    public ResponseEntity<?> getCategoryDetails(
+            @PathVariable Long categoryId,
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        try {
+            String username = userDetails.getUsername();
+            CollectionCategoryDetailDTO categoryDetails = collectionCategoryService.getCategoryDetails(categoryId, username);
+            return ResponseEntity.ok(categoryDetails);
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (AccessDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("서버 오류: " + e.getMessage());
+        }
     }
 
     /**

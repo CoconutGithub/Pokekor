@@ -5,6 +5,8 @@ import { jwtDecode } from "jwt-decode";
 // [수정] 파일 확장자(.tsx) 제거
 import { CardListPage } from './pages/CardListPage';
 import { MyCollectionPage } from './pages/MyCollectionPage';
+import { CollectionDetailPage } from './pages/CollectionDetailPage';
+
 // [수정] 파일 확장자(.ts) 제거
 // import type { CardDTO, CollectionCategoryDTO } from './types.ts';
 
@@ -186,6 +188,14 @@ function App() {
                             element={
                                 <ProtectedRoute>
                                     <MyCollectionPage />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/my-collection/:categoryId"
+                            element={
+                                <ProtectedRoute>
+                                    <CollectionDetailPage />
                                 </ProtectedRoute>
                             }
                         />

@@ -1,7 +1,8 @@
 // (기존 코드와 동일)
 import { useState, useEffect, Fragment } from 'react';
 import { useAuth } from '../App';
-import type { CardDTO, CollectionCategoryDTO } from '../types';
+// [수정] CollectionInfoDTO 타입을 import
+import type { CardDTO, CollectionCategoryDTO, CollectionInfoDTO } from '../types';
 
 export const CardListPage = () => {
     // (기존 코드와 동일 ... )
@@ -58,7 +59,7 @@ export const CardListPage = () => {
         setCollectStatus(null);
     };
 
-    // (기존 코드와 동일 ... )
+    // [수정] '확인' (수집) 버튼 핸들러 (성공 시 CollectionInfoDTO 객체 갱신)
     const handleConfirmCollect = async () => {
         if (!selectedCardId) return;
         if (targetCategoryId === '') {
@@ -74,6 +75,34 @@ export const CardListPage = () => {
             });
 
             setCollectStatus("수집 성공!");
+
+            // [수정] 추가한 카테고리의 '이름'과 '색상'을 찾음
+            const addedCategory = categories.find(
+                c => String(c.categoryId) === targetCategoryId
+            );
+
+            if (addedCategory) {
+                // [수정] 프론트엔드 state에 추가할 새 DTO 객체
+                const newCollectionInfo: CollectionInfoDTO = {
+                    categoryName: addedCategory.categoryName,
+                    themeColor: addedCategory.themeColor
+                };
+
+                setCards(prevCards =>
+                    prevCards.map(c =>
+                        c.cardId === selectedCardId ?
+                            {
+                                ...c,
+                                // [수정] 'collections' 배열에 새 객체를 추가
+                                // (중복 확인: 이미 같은 이름의 카테고리가 있는지 확인)
+                                collections: c.collections.find(col => col.categoryName === newCollectionInfo.categoryName)
+                                    ? c.collections // 이미 있으면 갱신 안함
+                                    : [...c.collections, newCollectionInfo] // 없으면 새로 추가
+                            } : c
+                    )
+                );
+            }
+
             setTimeout(() => {
                 setSelectedCardId(null);
                 setCollectStatus(null);
@@ -82,7 +111,8 @@ export const CardListPage = () => {
         } catch (err: any) {
             console.error("수집 실패:", err);
             if (err.response && err.response.data) {
-                setCollectStatus(`오류: ${err.response.data.message || err.response.data}`);
+                const message = typeof err.response.data === 'string' ? err.response.data : err.response.data.message;
+                setCollectStatus(`오류: ${message || '알 수 없는 오류'}`);
             } else {
                 setCollectStatus("수집에 실패했습니다.");
             }
@@ -112,30 +142,59 @@ export const CardListPage = () => {
 
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
                 {cards.map(card => (
-                    // [수정] 카드 아이템 div에 flex-column 스타일 적용
                     <div key={card.cardId} style={{
+                        // (레이아웃 스타일 동일)
                         border: '1px solid #ccc',
                         padding: '10px',
                         width: '200px',
                         backgroundColor: '#f9f9f9',
-                        // [수정] 1. 카드 박스 자체를 flex-column으로 만듭니다.
                         display: 'flex',
-                        flexDirection: 'column'
+                        flexDirection: 'column',
+                        position: 'relative'
                     }}>
 
-                        {/* [수정] 2. 이미지를 고정 높이(260px) 컨테이너로 감쌉니다. */}
+                        {/* [수정] 컬러 닷 (Dot) 영역 */}
+                        {/* [수정] card.collectedInColors -> card.collections */}
+                        {card.collections.length > 0 && (
+                            <div style={{
+                                top: '10px',
+                                left: '10px',
+                                display: 'flex',
+                                gap: '4px',
+                                marginBottom: '5px',
+                                zIndex: 2
+                            }}>
+                                {/* [수정] collection 객체(이름, 색상)를 순회 */}
+                                {card.collections.map((collection, index) => (
+                                    <div
+                                        key={index}
+                                        // [수정] HTML 'title' 속성을 사용하여 호버 시 툴팁 표시
+                                        title={collection.categoryName}
+                                        style={{
+                                            width: '10px',
+                                            height: '10px',
+                                            backgroundColor: collection.themeColor || '#ccc',
+                                            borderRadius: '50%',
+                                            border: '1px solid rgba(0,0,0,0.2)',
+                                            cursor: 'pointer' // [수정] 호버 가능함을 표시
+                                        }}
+                                    />
+                                ))}
+                            </div>
+                        )}
+
+                        {/* (이미지 컨테이너 동일) */}
                         <div style={{
                             width: '100%',
-                            height: '260px', // [수정] 이미지 영역 높이 고정
+                            height: '260px',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            marginBottom: '8px' // [수정] 텍스트와 여백
+                            marginBottom: '8px'
                         }}>
                             <img
                                 src={card.cardImageUrl}
                                 alt={card.cardName}
-                                // [수정] 이미지가 컨테이너를 넘지 않도록 max-width/height 설정
                                 style={{
                                     maxWidth: '100%',
                                     maxHeight: '100%',
@@ -145,13 +204,12 @@ export const CardListPage = () => {
                             />
                         </div>
 
-                        {/* [수정] 3. 텍스트 영역을 div로 묶습니다. */}
+                        {/* (텍스트 영역 동일) */}
                         <div>
                             <h4 style={{
-                                margin: '0 0 4px 0', // [수정] 마진 조정
+                                margin: '0 0 4px 0',
                                 fontSize: '16px',
                                 color: '#213547',
-                                // [수정] 카드 이름이 2줄일 경우를 대비해 최소 높이 고정 (16px * 1.5 line-height * 2줄 = 48px)
                                 minHeight: '3em'
                             }}>
                                 {card.cardName}
@@ -159,20 +217,18 @@ export const CardListPage = () => {
                             <p style={{ margin: 0, fontSize: '14px', color: '#555' }}>
                                 {card.packName}
                             </p>
-                            {/* [수정] 오타 수정 (rarityId -> rarityName) */}
                             <p style={{ margin: 0, fontSize: '12px', color: '#777' }}>
                                 {card.rarityId} ({card.cardNumberInPack})
                             </p>
                         </div>
 
                         {user && (
-                            // [수정] 4. 버튼 영역에 'marginTop: auto'를 적용해 맨 아래로 밀어냅니다.
                             <div style={{
-                                marginTop: 'auto', // [수정] 이 영역을 flex 컨테이너의 맨 아래로 밀어냄
-                                paddingTop: '10px'  // [수정] 위 텍스트 영역과의 최소 여백
+                                marginTop: 'auto',
+                                paddingTop: '10px'
                             }}>
+                                {/* [수정] 'isCollected' 분기 로직이 완전히 제거됨 */}
                                 {selectedCardId === card.cardId ? (
-                                    // (기존 코드와 동일)
                                     <Fragment>
                                         <select
                                             value={targetCategoryId}
@@ -199,11 +255,14 @@ export const CardListPage = () => {
                                         )}
                                     </Fragment>
                                 ) : (
-                                    // (기존 코드와 동일)
                                     <button
                                         onClick={() => handleCollectClick(card.cardId)}
                                         disabled={categories.length === 0}
-                                        style={{ width: '100%' }}
+                                        style={{
+                                            width: '100%',
+                                            paddingTop: '10px',
+                                            paddingBottom: '10px'
+                                        }}
                                     >
                                         수집
                                     </button>

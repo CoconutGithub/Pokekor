@@ -1,3 +1,8 @@
+export interface CollectionInfoDTO {
+    categoryName: string;
+    themeColor: string;
+}
+
 export interface CardDTO {
     cardId: number;
     cardName: string;
@@ -5,6 +10,7 @@ export interface CardDTO {
     cardNumberInPack: string;
     packName: string;
     rarityId: string;
+    collections: CollectionInfoDTO[];
 }
 
 /**

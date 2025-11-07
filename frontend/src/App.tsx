@@ -2,6 +2,8 @@ import React, { useState, createContext, useContext, useMemo, useEffect } from '
 import { BrowserRouter, Routes, Route, Link, useNavigate, Navigate, useLocation } from 'react-router-dom';
 import axios, { AxiosError } from 'axios';
 import { jwtDecode } from "jwt-decode";
+// [수정] CardListPage를 'pages' 디렉토리에서 가져옵니다.
+import { CardListPage } from './pages/CardListPage';
 
 // --- 1. 타입 정의 ---
 // (이전과 동일)
@@ -30,6 +32,17 @@ interface AuthContextType {
     logout: () => void;
     api: typeof api;
 }
+
+// [수정] CardDTO 타입을 CardListPage와 공유하기 위해 'export' 합니다.
+export interface CardDTO {
+    cardId: number;
+    cardName: string;
+    cardImageUrl?: string;
+    cardNumberInPack: string;
+    packName: string;
+    rarityName: string;
+}
+
 
 // --- 2. Axios 인스턴스 설정 ---
 // (이전과 동일)
@@ -62,11 +75,11 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 if (payload.exp * 1000 > Date.now()) {
                     setUser({ username: payload.sub });
                 } else {
-                    logout();
+                    setToken(null);
                 }
             } catch (e) {
                 console.error("Invalid token:", e);
-                logout();
+                setToken(null);
             }
             setLoading(false);
         } else {
@@ -87,7 +100,10 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         } catch (err) {
             console.error("Login error:", err);
             if (axios.isAxiosError(err)) {
-                throw new Error(err.response?.data || "로그인에 실패했습니다.");
+                // [수정] 백엔드 응답 메시지가 문자열일 경우를 처리
+                const errorData = err.response?.data;
+                const message = (typeof errorData === 'string' && errorData) ? errorData : "로그인에 실패했습니다.";
+                throw new Error(message);
             }
             throw new Error("로그인에 실패했습니다.");
         }
@@ -101,7 +117,10 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         } catch (err) {
             console.error("Signup error:", err);
             if (axios.isAxiosError(err)) {
-                throw new Error(err.response?.data || "회원가입에 실패했습니다.");
+                // [수정] 백엔드 응답 메시지가 문자열일 경우를 처리
+                const errorData = err.response?.data;
+                const message = (typeof errorData === 'string' && errorData) ? errorData : "회원가입에 실패했습니다.";
+                throw new Error(message);
             }
             throw new Error("회원가입에 실패했습니다.");
         }
@@ -131,7 +150,8 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     );
 };
 
-const useAuth = () => {
+// [수정] useAuth 훅을 다른 파일(CardListPage)에서 사용할 수 있도록 'export' 합니다.
+export const useAuth = () => {
     const context = useContext(AuthContext);
     if (!context) {
         throw new Error("useAuth must be used within an AuthProvider");
@@ -157,6 +177,9 @@ function App() {
                                 </ProtectedRoute>
                             }
                         />
+                        {/* [수정] 카드 목록 페이지 라우트 추가 */}
+                        <Route path="/cards" element={<CardListPage />} />
+
                         <Route path="*" element={<div>페이지를 찾을 수 없습니다.</div>} />
                     </Routes>
                 </Layout>
@@ -166,7 +189,7 @@ function App() {
 }
 
 // --- 4. 공통 레이아웃 (헤더/네비게이션) ---
-// [수정] 모든 className 속성 제거
+// (Tailwind 없는 버전)
 const Layout = ({ children }: { children: React.ReactNode }) => {
     const { user, logout } = useAuth();
 
@@ -180,8 +203,10 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                             <Link to="/">Pokekor</Link>
                             <div>
                                 <Link to="/">홈</Link>
+                                {/* [수정] 카드 목록 페이지 링크 추가 */}
+                                <Link to="/cards" style={{ marginLeft: '10px' }}>카드 목록</Link>
                                 {user && (
-                                    <Link to="/dashboard">대시보드</Link>
+                                    <Link to="/dashboard" style={{ marginLeft: '10px' }}>대시보드</Link>
                                 )}
                             </div>
                         </div>
@@ -189,14 +214,14 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                             {user ? (
                                 <div>
                                     <span>환영합니다, {user.username}님!</span>
-                                    <button onClick={logout}>
+                                    <button onClick={logout} style={{ marginLeft: '10px' }}>
                                         로그아웃
                                     </button>
                                 </div>
                             ) : (
                                 <div>
                                     <Link to="/login">로그인</Link>
-                                    <Link to="/register">회원가입</Link>
+                                    <Link to="/register" style={{ marginLeft: '10px' }}>회원가입</Link>
                                 </div>
                             )}
                         </div>
@@ -211,7 +236,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 };
 
 // --- 5. 페이지 컴포넌트 ---
-// [수정] 모든 className 속성 제거
+// (이전과 동일)
 
 const HomePage = () => (
     <div>
@@ -225,12 +250,16 @@ const DashboardPage = () => {
     const [message, setMessage] = useState('불러오는 중...');
 
     useEffect(() => {
-        api.get<string>('/api/test-auth')
+        api.get<string>('/api/auth/test')
             .then(response => {
                 setMessage(response.data);
             })
             .catch((err: AxiosError) => {
-                setMessage(`보호된 데이터 접근 성공! (테스트 API가 준비되면 연결하세요) - 상태: ${err.response?.status || 'Error'}`);
+                if(err.response?.status === 401 || err.response?.status === 403) {
+                    setMessage(`보호된 API 접근 테스트 성공 (상태: ${err.response.status})`);
+                } else {
+                    setMessage(`API 호출 오류 (상태: ${err.response?.status || 'Error'})`);
+                }
             });
     }, [api]);
 
@@ -276,16 +305,16 @@ const LoginPage = () => {
         <div>
             <div><h2>로그인</h2></div>
             <form onSubmit={handleSubmit}>
-                {error && <div>{error}</div>}
+                {error && <div style={{ color: 'red' }}>{error}</div>}
                 <div>
                     <div>
-                        <label htmlFor="login-username">아이디</label>
+                        <label htmlFor="login-username">아이디: </label>
                         <input id="login-username" name="username" type="text" required value={username}
                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
                                placeholder="아이디" />
                     </div>
                     <div>
-                        <label htmlFor="login-password">비밀번호</label>
+                        <label htmlFor="login-password">비밀번호: </label>
                         <input id="login-password" name="password" type="password" required value={password}
                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                                placeholder="비밀번호" />
@@ -335,23 +364,23 @@ const RegisterPage = () => {
         <div>
             <div><h2>회원가입</h2></div>
             <form onSubmit={handleSubmit}>
-                {error && <div>{error}</div>}
-                {success && <div>{success}</div>}
+                {error && <div style={{ color: 'red' }}>{error}</div>}
+                {success && <div style={{ color: 'green' }}>{success}</div>}
                 <div>
                     <div>
-                        <label htmlFor="reg-username">아이디</label>
+                        <label htmlFor="reg-username">아이디: </label>
                         <input id="reg-username" name="username" type="text" required value={username}
                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
                                placeholder="아이디" />
                     </div>
                     <div>
-                        <label htmlFor="reg-password">비밀번호</label>
+                        <label htmlFor="reg-password">비밀번호: </label>
                         <input id="reg-password" name="password" type="password" required value={password}
                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                                placeholder="비밀번호" />
                     </div>
                     <div>
-                        <label htmlFor="reg-email">이메일 (선택)</label>
+                        <label htmlFor="reg-email">이메일 (선택): </label>
                         <input id="reg-email" name="email" type="email" value={email}
                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
                                placeholder="이메일 (선택)" />
@@ -374,7 +403,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
     const location = useLocation();
 
     if (loading) {
-        return <div>Loading...</div>;
+        return <div>Loading...</div>; // (AuthContext 로딩 대기)
     }
 
     if (!user) {

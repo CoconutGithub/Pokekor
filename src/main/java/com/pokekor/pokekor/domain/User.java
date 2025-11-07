@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "T_USER") // 실제 DB 테이블 이름과 매핑

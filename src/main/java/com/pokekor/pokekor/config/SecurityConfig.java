@@ -1,6 +1,7 @@
 package com.pokekor.pokekor.config;
 
 import com.pokekor.pokekor.auth.CustomUserDetailService;
+import com.pokekor.pokekor.auth.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -62,10 +63,17 @@ public class SecurityConfig {
 
                 // API 경로별 접근 권한 설정
                 .authorizeHttpRequests(authorize -> authorize
-                        // 1. /api/auth/** 경로는 모두에게 허용 (회원가입, 로그인)
-                        .requestMatchers("/api/auth/**").permitAll()
+                        // [수정됨] React 정적 파일 및 인증 API 경로 허용
+                        .requestMatchers(
+                                "/",
+                                "/index.html",
+                                "/assets/**", // Vite 빌드 JS/CSS
+                                "/favicon.ico",
+                                "/manifest.json", // PWA 등
+                                "/api/auth/**"  // 기존 회원가입/로그인 API
+                        ).permitAll()
 
-                        // 2. 그 외 모든 API 요청은 인증된(authenticated) 사용자만 접근 가능
+                        // [수정됨] 그 외 모든 요청(anyRequest)은 인증된 사용자만
                         .anyRequest().authenticated()
                 )
 

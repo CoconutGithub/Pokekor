@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.5.7'
     id 'io.spring.dependency-management' version '1.1.7'
+    id "com.github.node-gradle.node" version "7.0.2"
 }
 
 group = 'com.pokekor'
@@ -39,6 +40,40 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+// [추가] Node 플러그인 설정
+node {
+    // React 프로젝트가 있는 폴더 지정
+    nodeProjectDir = file("${project.projectDir}/frontend")
+    // CI 환경 등에서 Node/npm을 자동으로 다운로드
+    download = true
+//    // package.json에 명시된 Node 버전 사용
+//    useNpmProjectEnv = true
+}
+
+// [추가] React 빌드 및 Spring Boot 리소스 복사 설정
+// 1. 'npm run build' (React 빌드) 태스크 정의
+task npmBuild(type: NpmTask) {
+    // 'npm run dev'가 아닌 'npm run build' 명령어 실행
+    args = ['run', 'build']
+    // npmInstall 태스크가 먼저 실행되어야 함
+    dependsOn npmInstall
+    // React 빌드 결과물(dist)이 생성될 위치
+    outputs.dir file("${project.projectDir}/frontend/dist")
+}
+
+// 2. Spring Boot가 리소스를 처리하기 전에(processResources)
+processResources {
+    // 'npmBuild' 태스크가 먼저 완료되어야 함
+    dependsOn npmBuild
+
+    // 3. 빌드된 React 파일들을 Spring Boot의 static 폴더로 복사
+    // (React 빌드 결과물 경로: frontend/dist)
+    // (Spring Boot 정적 리소스 경로: build/resources/main/static)
+    from ("${project.projectDir}/frontend/dist") {
+        into 'static' // 'build/resources/main/static' 폴더 안으로 복사
+    }
 }
 
 tasks.named('test') {

@@ -19,7 +19,7 @@ import java.util.function.Function;
 public class JwtUtil {
 
     // application.properties에 설정된 시크릿 키
-    @Value("${jwt.secret-key}")
+    @Value("${spring.jwt.secret}")
     private String secretKey;
 
     // 토큰 만료 시간 (예: 24시간)

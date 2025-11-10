@@ -43,3 +43,14 @@ export interface CollectionCategoryDetailDTO {
     categoryType: 'OWNED' | 'WISHLIST';
     collectedCards: CardDTO[]; // 수집된 카드 목록이 여기에 포함됩니다.
 }
+
+/**
+ * [추가됨] 백엔드 PackDTO (팩 목록 조회 응답용)
+ */
+export interface PackDTO {
+    packId: number;
+    packNameKo: string;
+    packImageUrl?: string;
+    releaseDate?: string;
+    series: string; // "DP", "BW", "XY" 등
+}

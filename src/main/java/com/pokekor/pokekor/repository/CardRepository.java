@@ -4,6 +4,7 @@ import com.pokekor.pokekor.domain.Card;
 import com.pokekor.pokekor.domain.Rarity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -18,4 +19,7 @@ public interface CardRepository extends JpaRepository<Card, Long> {
 
     @Query("SELECT c FROM Card c LEFT JOIN FETCH c.pack p LEFT JOIN FETCH c.rarity r")
     List<Card> findAllWithDetails();
+
+    @Query("SELECT c FROM Card c LEFT JOIN FETCH c.pack p LEFT JOIN FETCH c.rarity r WHERE p.packId = :packId")
+    List<Card> findAllWithDetailsByPackId(@Param("packId") Long packId);
 }

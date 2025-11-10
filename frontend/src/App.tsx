@@ -6,6 +6,7 @@ import { jwtDecode } from "jwt-decode";
 import { CardListPage } from './pages/CardListPage';
 import { MyCollectionPage } from './pages/MyCollectionPage';
 import { CollectionDetailPage } from './pages/CollectionDetailPage';
+import { PackListPage } from './pages/PackListPage'
 
 // [수정] 파일 확장자(.ts) 제거
 // import type { CardDTO, CollectionCategoryDTO } from './types.ts';
@@ -173,6 +174,7 @@ function App() {
                         <Route path="/login" element={<LoginPage />} />
                         <Route path="/register" element={<RegisterPage />} />
                         <Route path="/cards" element={<CardListPage />} />
+                        <Route path="/packs" element={<PackListPage />} />
 
                         {/* --- 보호된 경로 --- */}
                         <Route
@@ -222,7 +224,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                             <Link to="/">Pokekor</Link>
                             <div>
                                 <Link to="/">홈</Link>
-                                <Link to="/cards" style={{ marginLeft: '10px' }}>카드 목록</Link>
+                                <Link to="/packs" style={{ marginLeft: '10px' }}>카드 팩</Link> {/* [수정] '카드 목록' -> '카드 팩' */}
+                                <Link to="/cards" style={{ marginLeft: '10px' }}>전체 카드</Link> {/* [수정] '카드 목록' -> '전체 카드' */}
                                 {user && (
                                     <>
                                         <Link to="/my-collection" style={{ marginLeft: '10px' }}>내 컬렉션</Link>

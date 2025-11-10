@@ -1,8 +1,8 @@
-// (기존 코드와 동일)
+// [수정] useSearchParams, Link 추가
 import { useState, useEffect, Fragment } from 'react';
 import { useAuth } from '../App';
-// [수정] CollectionInfoDTO 타입을 import
-import type { CardDTO, CollectionCategoryDTO, CollectionInfoDTO } from '../types';
+import type { CardDTO, CollectionCategoryDTO, CollectionInfoDTO } from '../types'; // [수정] CollectionInfoDTO 타입을 import
+import { useSearchParams, Link } from 'react-router-dom'; // [추가]
 
 export const CardListPage = () => {
     // (기존 코드와 동일 ... )
@@ -15,15 +15,30 @@ export const CardListPage = () => {
     const [targetCategoryId, setTargetCategoryId] = useState<string>('');
     const [collectStatus, setCollectStatus] = useState<string | null>(null);
 
+    // [추가] URL 쿼리 파라미터에서 packId를 읽어옵니다.
+    const [searchParams] = useSearchParams();
+    const packId = searchParams.get('packId');
+    const [packName, setPackName] = useState<string | null>(null); // [추가] 팩 제목 표시용
+
     // (기존 코드와 동일 ... )
     useEffect(() => {
         const fetchAllData = async () => {
             try {
                 setLoading(true);
                 setError(null);
+                setPackName(null); // [추가] 초기화
 
-                const cardsResponse = await api.get<CardDTO[]>('/cards');
+                // [수정] /api/cards 호출 시 packId를 파라미터로 전달
+                const cardsResponse = await api.get<CardDTO[]>('/cards', {
+                    params: { packId } // packId가 null이면 자동으로 무시됨
+                });
+
                 setCards(cardsResponse.data);
+
+                // [추가] 팩 ID가 있고 카드 데이터가 있으면, 첫 번째 카드에서 팩 이름을 가져와 제목으로 설정
+                if (packId && cardsResponse.data.length > 0) {
+                    setPackName(cardsResponse.data[0].packName);
+                }
 
                 if (user) {
                     const categoryResponse = await api.get<CollectionCategoryDTO[]>('/my-collections');
@@ -42,7 +57,7 @@ export const CardListPage = () => {
         };
 
         fetchAllData();
-    }, [api, user]);
+    }, [api, user, packId]); // [수정] packId가 바뀔 때마다 다시 실행
 
     // (기존 코드와 동일 ... )
     const handleCollectClick = (cardId: number) => {
@@ -130,14 +145,26 @@ export const CardListPage = () => {
 
     return (
         <div>
-            {/* (기존 코드와 동일 ... ) */}
-            <h1>전체 카드 목록</h1>
+            {/* [추가] 팩 목록으로 돌아가기 링크 */}
+            {packId && (
+                <div style={{ marginBottom: '15px', textAlign: 'left' }}>
+                    <Link to="/packs">&larr; 카드 팩 목록으로</Link>
+                </div>
+            )}
+
+            {/* [수정] 제목을 동적으로 변경 */}
+            <h1>{packName || '전체 카드 목록'}</h1>
             <p>총 {cards.length}장의 카드가 있습니다.</p>
 
             {user && categories.length === 0 && (
                 <div style={{ padding: '10px', backgroundColor: '#fff3cd', color: '#856404', border: '1px solid #ffeeba', marginBottom: '15px' }}>
                     '내 컬렉션' 페이지에서 카테고리(앨범)를 1개 이상 생성해야 카드를 수집할 수 있습니다.
                 </div>
+            )}
+
+            {/* [추가] 팩 조회 시 카드가 없는 경우 */}
+            {packId && cards.length === 0 && !loading && (
+                <p>이 팩에 등록된 카드가 아직 없습니다.</p>
             )}
 
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px' }}>

@@ -30,6 +30,9 @@ public class Pack {
     @Column(name = "pack_image_url", length = 1000)
     private String packImageUrl;
 
+    @Column(name = "series", length = 50)
+    private String series;
+
     // 하나의 팩은 여러 개의 카드를 포함함 (1:N 관계)
     @OneToMany(mappedBy = "pack", cascade = CascadeType.ALL)
     private List<Card> cards = new ArrayList<>();

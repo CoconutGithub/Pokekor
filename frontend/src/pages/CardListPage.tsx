@@ -33,11 +33,14 @@ export const CardListPage = () => {
                     params: { packId } // packId가 null이면 자동으로 무시됨
                 });
 
-                setCards(cardsResponse.data);
+                // [추가] 카드 ID 순서대로 정렬
+                const sortedCards = cardsResponse.data.sort((a, b) => a.cardId - b.cardId);
+
+                setCards(sortedCards); // [수정] 정렬된 데이터(sortedCards)를 state에 저장
 
                 // [추가] 팩 ID가 있고 카드 데이터가 있으면, 첫 번째 카드에서 팩 이름을 가져와 제목으로 설정
-                if (packId && cardsResponse.data.length > 0) {
-                    setPackName(cardsResponse.data[0].packName);
+                if (packId && sortedCards.length > 0) { // [수정] sortedCards 사용
+                    setPackName(sortedCards[0].packName); // [수정] sortedCards 사용
                 }
 
                 if (user) {
@@ -180,35 +183,33 @@ export const CardListPage = () => {
                         position: 'relative'
                     }}>
 
-                        {/* [수정] 컬러 닷 (Dot) 영역 */}
-                        {/* [수정] card.collectedInColors -> card.collections */}
-                        {card.collections.length > 0 && (
-                            <div style={{
-                                top: '10px',
-                                left: '10px',
-                                display: 'flex',
-                                gap: '4px',
-                                marginBottom: '5px',
-                                zIndex: 2
-                            }}>
-                                {/* [수정] collection 객체(이름, 색상)를 순회 */}
-                                {card.collections.map((collection, index) => (
-                                    <div
-                                        key={index}
-                                        // [수정] HTML 'title' 속성을 사용하여 호버 시 툴팁 표시
-                                        title={collection.categoryName}
-                                        style={{
-                                            width: '10px',
-                                            height: '10px',
-                                            backgroundColor: collection.themeColor || '#ccc',
-                                            borderRadius: '50%',
-                                            border: '1px solid rgba(0,0,0,0.2)',
-                                            cursor: 'pointer' // [수정] 호버 가능함을 표시
-                                        }}
-                                    />
-                                ))}
-                            </div>
-                        )}
+                        {/* [수정] 컬러 닷 (Dot) 영역 - 레이아웃 고정을 위해 div는 항상 렌더링 */}
+                        <div style={{
+                            // top: '10px', // (삭제)
+                            // left: '10px', // (삭제)
+                            display: 'flex',
+                            gap: '4px',
+                            marginBottom: '5px',
+                            zIndex: 2,
+                            minHeight: '10px' // [수정] 닷의 높이(10px)만큼 최소 높이를 지정
+                        }}>
+                            {/* [수정] card.collections.length > 0을 내부로 이동 */}
+                            {card.collections.length > 0 && card.collections.map((collection, index) => (
+                                <div
+                                    key={index}
+                                    // [수정] HTML 'title' 속성을 사용하여 호버 시 툴팁 표시
+                                    title={collection.categoryName}
+                                    style={{
+                                        width: '10px',
+                                        height: '10px',
+                                        backgroundColor: collection.themeColor || '#ccc',
+                                        borderRadius: '50%',
+                                        border: '1px solid rgba(0,0,0,0.2)',
+                                        cursor: 'pointer' // [수정] 호버 가능함을 표시
+                                    }}
+                                />
+                            ))}
+                        </div>
 
                         {/* (이미지 컨테이너 동일) */}
                         <div style={{

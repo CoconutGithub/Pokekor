@@ -17,7 +17,8 @@ import java.util.List;
  */
 public class CardSpecification {
 
-    public static Specification<Card> search(String cardName, Long packId, String rarityId) {
+    // [수정] cardType, cardAttribute 파라미터 추가
+    public static Specification<Card> search(String cardName, Long packId, String rarityId, String cardType, String cardAttribute) {
 
         return (root, query, cb) -> {
 
@@ -51,6 +52,17 @@ public class CardSpecification {
                 Join<Card, Rarity> rarityJoin = root.join("rarity", JoinType.LEFT);
                 predicates.add(cb.equal(rarityJoin.get("rarityId"), rarityId));
             }
+
+            // [추가] 2-4. 카드 유형 (cardType) 필터
+            if (StringUtils.hasText(cardType)) {
+                predicates.add(cb.equal(root.get("cardType"), cardType));
+            }
+
+            // [추가] 2-5. 카드 속성 (cardAttribute) 필터
+            if (StringUtils.hasText(cardAttribute)) {
+                predicates.add(cb.equal(root.get("cardAttribute"), cardAttribute));
+            }
+
 
             // 3. 모든 조건을 AND로 결합하여 반환
             return cb.and(predicates.toArray(new Predicate[0]));

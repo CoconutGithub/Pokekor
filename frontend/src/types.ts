@@ -11,6 +11,9 @@ export interface CardDTO {
     packName: string;
     rarityId: string;
     collections: CollectionInfoDTO[];
+    // [추가] 카드 유형 및 속성
+    cardType: string;
+    cardAttribute?: string; // 포켓몬이 아닌 경우 없을 수 있음
 }
 
 /**

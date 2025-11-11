@@ -16,6 +16,10 @@ public class CardDTO {
     private String cardNumberInPack;
     private String packName; // Pack 엔티티의 packNameKo
     private String rarityId; // Rarity 엔티티의 rarityName
+
+    // [추가] 카드 유형 및 속성 필드
+    private String cardType;
+    private String cardAttribute;
     // [수정] boolean isCollected -> List<String> collectedInColors
     private List<CollectionInfoDTO> collections = new ArrayList<>(); // 빈 리스트로 초기화
 
@@ -30,6 +34,10 @@ public class CardDTO {
         this.cardName = card.getCardName();
         this.cardImageUrl = card.getCardImageUrl();
         this.cardNumberInPack = card.getCardNumberInPack();
+
+        // [추가] 유형 및 속성 매핑
+        this.cardType = card.getCardType();
+        this.cardAttribute = card.getCardAttribute();
 
         if (card.getPack() != null) {
             this.packName = card.getPack().getPackNameKo();

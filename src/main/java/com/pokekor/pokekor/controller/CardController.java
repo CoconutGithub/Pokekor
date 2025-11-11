@@ -30,22 +30,27 @@ public class CardController {
      *
      * @param userDetails (로그인 사용자 정보)
      * @param packId (필터링할 팩 ID, 선택 사항)
-     * @param cardName (검색할 카드 이름, 선택 사항) // [수정]
-     * @param rarityId (필터링할 레어도 ID, 선택 사항) // [추가]
+     * @param cardName (검색할 카드 이름, 선택 사항)
+     * @param rarityId (필터링할 레어도 ID, 선택 사항)
+     * @param cardType (검색할 카드 유형, 선택 사항) // [추가]
+     * @param cardAttribute (검색할 카드 속성, 선택 사항) // [추가]
      */
     @GetMapping
-    public ResponseEntity<List<CardDTO>> searchCards( // [수정] 메서드 이름 변경
-                                                      @AuthenticationPrincipal UserDetails userDetails,
-                                                      @RequestParam(required = false) Long packId,
-                                                      // [수정] 프론트엔드에서 'name'으로 보내는 파라미터를 받도록 (name = "name") 추가
-                                                      @RequestParam(required = false, name = "name") String cardName,
-                                                      @RequestParam(required = false) String rarityId  // [추가]
+    public ResponseEntity<List<CardDTO>> searchCards(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam(required = false) Long packId,
+            @RequestParam(required = false, name = "name") String cardName, // (이전 수정사항 반영)
+            @RequestParam(required = false) String rarityId,
+            // [추가] 'type' 파라미터를 cardType 변수에 매핑
+            @RequestParam(required = false, name = "type") String cardType,
+            // [추가] 'attribute' 파라미터를 cardAttribute 변수에 매핑
+            @RequestParam(required = false, name = "attribute") String cardAttribute
     ) {
         // 1. username 추출
         String username = (userDetails != null) ? userDetails.getUsername() : null;
 
         // 2. [수정] 서비스에 모든 파라미터 전달
-        List<CardDTO> cards = cardService.searchCards(username, packId, cardName, rarityId);
+        List<CardDTO> cards = cardService.searchCards(username, packId, cardName, rarityId, cardType, cardAttribute);
 
         return ResponseEntity.ok(cards);
     }

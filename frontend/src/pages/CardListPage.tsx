@@ -4,6 +4,31 @@ import { useAuth } from '../App';
 import type { CardDTO, CollectionCategoryDTO, CollectionInfoDTO, PackDTO, RarityDTO } from '../types'; // [수정]
 import { useSearchParams, Link } from 'react-router-dom';
 
+// [추가] 검색 필터용 상수 정의
+// (나중에 API로 대체 가능)
+const CARD_TYPES = [
+    { id: 'POKEMON', name: '포켓몬' },
+    { id: 'TRAINER', name: '트레이너' },
+    { id: 'BASIC_ENERGY', name: '기본 에너지' },
+    { id: 'SPECIAL_ENERGY', name: '특수 에너지' },
+];
+
+// [추가] 검색 필터용 상수 정의
+const CARD_ATTRIBUTES = [
+    { id: 'GRASS', name: '풀' },
+    { id: 'FIRE', name: '불' },
+    { id: 'WATER', name: '물' },
+    { id: 'LIGHTNING', name: '번개' },
+    { id: 'PSYCHIC', name: '초' },
+    { id: 'FIGHTING', name: '격투' },
+    { id: 'DARKNESS', name: '악' },
+    { id: 'METAL', name: '강철' },
+    { id: 'DRAGON', name: '드래곤' },
+    { id: 'FAIRY', name: '페어리' },
+    { id: 'COLORLESS', name: '무색' },
+];
+
+
 export const CardListPage = () => {
     // (기존 코드와 동일 ... )
     const { api, user } = useAuth();
@@ -20,6 +45,11 @@ export const CardListPage = () => {
     const packId = searchParams.get('packId') || '';
     const cardName = searchParams.get('name') || '';
     const rarityId = searchParams.get('rarityId') || '';
+    // [추가] 유형 및 속성 파라미터
+    const cardType = searchParams.get('type') || '';
+    // [추가] 유형 및 속성 파라미터
+    const cardAttribute = searchParams.get('attribute') || '';
+
 
     // [추가] 팩/레어도 드롭다운 목록을 담을 state
     const [packs, setPacks] = useState<PackDTO[]>([]);
@@ -29,6 +59,11 @@ export const CardListPage = () => {
     const [filterName, setFilterName] = useState(cardName);
     const [filterPack, setFilterPack] = useState(packId);
     const [filterRarity, setFilterRarity] = useState(rarityId);
+    // [추가] 유형 및 속성 폼 state
+    const [filterType, setFilterType] = useState(cardType);
+    // [추가] 유형 및 속성 폼 state
+    const [filterAttribute, setFilterAttribute] = useState(cardAttribute);
+
 
     const [packName, setPackName] = useState<string | null>(null); // (기존과 동일)
 
@@ -45,7 +80,9 @@ export const CardListPage = () => {
                     params: {
                         packId: packId || undefined, // 빈 문자열이면 undefined로 보내 생략
                         name: cardName || undefined,
-                        rarityId: rarityId || undefined
+                        rarityId: rarityId || undefined,
+                        type: cardType || undefined, // [추가]
+                        attribute: cardAttribute || undefined // [추가]
                     }
                 });
 
@@ -85,7 +122,8 @@ export const CardListPage = () => {
         };
 
         fetchAllData();
-    }, [api, user, packId, cardName, rarityId, packs]); // [수정] packId, cardName, rarityId, packs(팩 이름용) 의존성 추가
+        // [수정] 의존성 배열에 cardType, cardAttribute 추가
+    }, [api, user, packId, cardName, rarityId, cardType, cardAttribute, packs]); // [수정] packs(팩 이름용) 의존성 추가
 
     // [추가] 검색 필터(팩, 레어도) 데이터 조회 Effect (최초 1회)
     useEffect(() => {
@@ -112,7 +150,11 @@ export const CardListPage = () => {
         setFilterName(cardName);
         setFilterPack(packId);
         setFilterRarity(rarityId);
-    }, [cardName, packId, rarityId]);
+        // [추가]
+        setFilterType(cardType);
+        // [추가]
+        setFilterAttribute(cardAttribute);
+    }, [cardName, packId, rarityId, cardType, cardAttribute]); // [수정] 의존성 추가
 
 
     // (기존 코드와 동일 ... )
@@ -123,10 +165,12 @@ export const CardListPage = () => {
             setTargetCategoryId(String(categories[0].categoryId));
         }
     };
+    // (기존 코드와 동일 ... )
     const handleCancelClick = () => {
         setSelectedCardId(null);
         setCollectStatus(null);
     };
+    // (기존 코드와 동일 ... )
     const handleConfirmCollect = async () => {
         if (!selectedCardId) return;
         if (targetCategoryId === '') {
@@ -185,6 +229,8 @@ export const CardListPage = () => {
         if (filterName) newParams.name = filterName;
         if (filterPack) newParams.packId = filterPack;
         if (filterRarity) newParams.rarityId = filterRarity;
+        if (filterType) newParams.type = filterType; // [추가]
+        if (filterAttribute && filterType === 'POKEMON') newParams.attribute = filterAttribute; // [추가]
 
         setSearchParams(newParams);
     };
@@ -194,6 +240,8 @@ export const CardListPage = () => {
         setFilterName('');
         setFilterPack('');
         setFilterRarity('');
+        setFilterType(''); // [추가]
+        setFilterAttribute(''); // [추가]
         setSearchParams({}); // URL 파라미터 모두 제거
     };
 
@@ -207,12 +255,14 @@ export const CardListPage = () => {
     }
 
     // [추가] 검색 중인지 여부 확인 (파라미터가 하나라도 있는지)
-    const isSearching = !!(packId || cardName || rarityId);
+    // [수정] cardType, cardAttribute 검색 조건 포함
+    const isSearching = !!(packId || cardName || rarityId || cardType || cardAttribute);
 
     return (
         <div>
             {/* [수정] 팩 목록으로 돌아가기 링크 (팩 ID가 넘어왔을 때만) */}
-            {packId && !cardName && !rarityId && ( // 팩 단일 조회 시에만
+            {/* [수정] 다른 검색 조건이 없을 때만 표시 */}
+            {packId && !cardName && !rarityId && !cardType && !cardAttribute && ( // 팩 단일 조회 시에만
                 <div style={{ marginBottom: '15px', textAlign: 'left' }}>
                     <Link to="/packs">&larr; 카드 팩 목록으로</Link>
                 </div>
@@ -227,7 +277,8 @@ export const CardListPage = () => {
                 textAlign: 'left'
             }}>
                 <form onSubmit={handleSearchSubmit}>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 15px' }}>
+                    {/* [수정] flex-wrap을 사용하고 gap을 늘림 */}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px 20px' }}>
                         {/* 1. 카드 이름 입력 */}
                         <div style={{ flex: '1 1 200px' }}>
                             <label htmlFor="filter-name" style={{ display: 'block', marginBottom: '5px' }}>카드 이름:</label>
@@ -273,7 +324,52 @@ export const CardListPage = () => {
                             </select>
                         </div>
 
-                        {/* 4. 버튼 */}
+                        {/* [추가] 4. 카드 유형 선택 */}
+                        <div style={{ flex: '1 1 150px' }}>
+                            <label htmlFor="filter-type" style={{ display: 'block', marginBottom: '5px' }}>카드 유형:</label>
+                            <select
+                                id="filter-type"
+                                value={filterType}
+                                onChange={(e) => {
+                                    const newType = e.target.value;
+                                    setFilterType(newType);
+                                    // [추가] 포켓몬이 아닌 유형 선택 시, 속성 필터를 초기화
+                                    if (newType !== 'POKEMON') {
+                                        setFilterAttribute('');
+                                    }
+                                }}
+                                style={{ width: '100%', padding: '8px' }}
+                            >
+                                <option value="">전체 유형</option>
+                                {CARD_TYPES.map(t => (
+                                    <option key={t.id} value={t.id}>{t.name}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* [추가] 5. 카드 속성 선택 */}
+                        <div style={{ flex: '1 1 150px' }}>
+                            <label htmlFor="filter-attribute" style={{ display: 'block', marginBottom: '5px' }}>포켓몬 속성:</label>
+                            <select
+                                id="filter-attribute"
+                                value={filterAttribute}
+                                onChange={(e) => setFilterAttribute(e.target.value)}
+                                // [추가] '포켓몬' 유형이 선택됐을 때만 활성화
+                                disabled={filterType !== 'POKEMON'}
+                                style={{
+                                    width: '100%',
+                                    padding: '8px',
+                                }}
+                            >
+                                <option value="">전체 속성</option>
+                                {CARD_ATTRIBUTES.map(a => (
+                                    <option key={a.id} value={a.id}>{a.name}</option>
+                                ))}
+                            </select>
+                        </div>
+
+
+                        {/* [수정] 6. 버튼 */}
                         <div style={{ flex: '1 1 100%', display: 'flex', gap: '10px', alignItems: 'flex-end', marginTop: '10px' }}>
                             <button
                                 type="submit"
@@ -378,13 +474,13 @@ export const CardListPage = () => {
                             />
                         </div>
 
-                        {/* (텍스트 영역 동일) */}
+                        {/* [수정] 텍스트 영역에 유형/속성 표시 */}
                         <div>
                             <h4 style={{
                                 margin: '0 0 4px 0',
                                 fontSize: '16px',
                                 color: '#213547',
-                                minHeight: '3em'
+                                minHeight: '3em' // [수정] 2줄 -> 3em (약 2줄)
                             }}>
                                 {card.cardName}
                             </h4>
@@ -394,7 +490,15 @@ export const CardListPage = () => {
                             <p style={{ margin: 0, fontSize: '12px', color: '#777' }}>
                                 {card.rarityId} ({card.cardNumberInPack})
                             </p>
+                            {/* [추가] 카드 유형 및 속성 표시 */}
+                            <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#333' }}>
+                                {card.cardType === 'POKEMON' && card.cardAttribute ?
+                                    `${card.cardAttribute} ${card.cardType}` : // 예: "불 포켓몬"
+                                    card.cardType // 예: "트레이너스"
+                                }
+                            </p>
                         </div>
+
 
                         {/* (수집 버튼 영역 동일) */}
                         {user && (

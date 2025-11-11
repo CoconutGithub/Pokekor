@@ -21,24 +21,30 @@ public class CardController {
     private final CardService cardService;
 
     /**
-     * [수정됨] 전체 카드 목록 조회 API (packId로 필터링 가능)
+     * [수정됨] 카드 검색 API (다중 필터링 지원)
      * GET /api/cards
      * GET /api/cards?packId=123
+     * GET /api/cards?name=피카츄
+     * GET /api/cards?rarity=SR
+     * GET /api/cards?packId=123&name=리자몽&rarity=SR
      *
-     * @param userDetails (SecurityConfig에 의해 인증된 사용자 정보. 비로그인 시 null)
-     * @param packId (필터링할 팩 ID, 선택 사항) // [수정] 파라미터 추가
+     * @param userDetails (로그인 사용자 정보)
+     * @param packId (필터링할 팩 ID, 선택 사항)
+     * @param cardName (검색할 카드 이름, 선택 사항) // [추가]
+     * @param rarityId (필터링할 레어도 ID, 선택 사항) // [추가]
      */
     @GetMapping
-    public ResponseEntity<List<CardDTO>> getAllCards(
-            @AuthenticationPrincipal UserDetails userDetails, // [수정] 로그인 사용자 정보 받기
-            @RequestParam(required = false) Long packId // [수정] 쿼리 파라미터(packId) 받기
+    public ResponseEntity<List<CardDTO>> searchCards( // [수정] 메서드 이름 변경
+                                                      @AuthenticationPrincipal UserDetails userDetails,
+                                                      @RequestParam(required = false) Long packId,
+                                                      @RequestParam(required = false) String cardName, // [추가]
+                                                      @RequestParam(required = false) String rarityId  // [추가]
     ) {
-        // [수정]
-        // 1. userDetails가 null인지 확인하여 (비로그인) username을 추출
+        // 1. username 추출
         String username = (userDetails != null) ? userDetails.getUsername() : null;
 
-        // 2. 서비스에 username과 packId를 전달
-        List<CardDTO> cards = cardService.getAllCards(username, packId);
+        // 2. [수정] 서비스에 모든 파라미터 전달
+        List<CardDTO> cards = cardService.searchCards(username, packId, cardName, rarityId);
 
         return ResponseEntity.ok(cards);
     }

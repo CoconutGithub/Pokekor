@@ -5,8 +5,10 @@ import com.pokekor.pokekor.domain.CollectedCard;
 import com.pokekor.pokekor.dto.CardDTO;
 import com.pokekor.pokekor.dto.CollectionInfoDTO;
 import com.pokekor.pokekor.repository.CardRepository;
+import com.pokekor.pokekor.repository.CardSpecification;
 import com.pokekor.pokekor.repository.CollectedCardRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,35 +20,25 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true) // 기본적으로 읽기 전용 트랜잭션
+@Transactional(readOnly = true)
 public class CardService {
 
     private final CardRepository cardRepository;
     private final CollectedCardRepository collectedCardRepository;
 
-    /**
-     * [수정됨] 모든 카드 목록을 DTO로 변환하여 반환 (packId로 필터링 가능)
-     *
-     * @param username (로그인한 사용자의 아이디, 비로그인 시 null)
-     * @param packId (특정 팩 ID, 전체 조회 시 null) // [수정] 파라미터 추가
-     * @return List<CardDTO>
-     */
-    public List<CardDTO> getAllCards(String username, Long packId) { // [수정] 파라미터 추가
+    // ... (searchCards 메서드 시그니처, 수집 정보 조회 로직은 동일)
+    public List<CardDTO> searchCards(String username, Long packId, String cardName, String rarityId) {
 
-        // 1. [수정됨] 사용자가 로그인한 경우, 수집한 모든 카드/카테고리 정보를 조회
-        Map<Long, List<CollectionInfoDTO>> collectedCardInfoMap = Collections.emptyMap(); // 기본값 (비로그인)
-
+        // 1. 수집 정보 조회 (기존 로직과 동일)
+        Map<Long, List<CollectionInfoDTO>> collectedCardInfoMap = Collections.emptyMap();
         if (username != null) {
-            // 1-1. (기존과 동일)
             List<CollectedCard> allCollectedCards =
-                    collectedCardRepository.findWithCategoryByUsername(username); //
+                    collectedCardRepository.findWithCategoryByUsername(username);
 
-            // 1-2. [수정됨] List<CollectedCard>를 Map<Long (cardId), List<CollectionInfoDTO>>으로 변환
             collectedCardInfoMap = allCollectedCards.stream()
+                    // ... (groupingBy 로직 동일)
                     .collect(Collectors.groupingBy(
-                            // Key: CollectedCard -> Card -> cardId
                             cc -> cc.getCard().getCardId(),
-                            // Value: CollectedCard -> Category -> new CollectionInfoDTO(이름, 색상)
                             Collectors.mapping(
                                     cc -> new CollectionInfoDTO(
                                             cc.getCategory().getCategoryName(),
@@ -57,22 +49,17 @@ public class CardService {
                     ));
         }
 
-        // 2. (기존 코드) N+1 방지를 위해 JOIN FETCH 쿼리 사용
+        // 2. [수정] 검색 조건(Specification) 생성 (CardSpecification에서 fetch join 처리)
+        Specification<Card> spec = CardSpecification.search(cardName, packId, rarityId);
+
+        // 3. [수정] JpaSpecificationExecutor의 기본 findAll(spec) 메서드를 호출
+        List<Card> cards = cardRepository.findAll(spec);
+
+
         final Map<Long, List<CollectionInfoDTO>> finalCollectedCardInfoMap = collectedCardInfoMap;
 
-        // [수정] packId 유무에 따라 다른 쿼리 메서드 호출
-        List<Card> cards;
-        if (packId != null) {
-            // 팩 ID가 있으면, 해당 팩의 카드만 N+1 방지 쿼리로 조회
-            cards = cardRepository.findAllWithDetailsByPackId(packId);
-        } else {
-            // 팩 ID가 없으면, 모든 카드 N+1 방지 쿼리로 조회 (기존 로직)
-            cards = cardRepository.findAllWithDetails();
-        }
-
-        // [수정] 조회된 cards 리스트를 DTO로 변환
+        // 4. DTO 변환 (기존 로직과 동일)
         return cards.stream()
-                // [수정] DTO 생성자에 '수집 정보 맵'을 전달
                 .map(card -> new CardDTO(card, finalCollectedCardInfoMap))
                 .collect(Collectors.toList());
     }

@@ -54,3 +54,12 @@ export interface PackDTO {
     releaseDate?: string;
     series: string; // "DP", "BW", "XY" 등
 }
+
+/**
+ * [추가됨] 백엔드 RarityDTO (레어도 목록 조회 응답용)
+ */
+export interface RarityDTO {
+    rarityId: string;
+    rarityName: string;
+    rarityDescription?: string;
+}

@@ -11,6 +11,10 @@ const CARD_TYPES = [
     { id: 'TRAINER', name: '트레이너' },
     { id: 'BASIC_ENERGY', name: '기본 에너지' },
     { id: 'SPECIAL_ENERGY', name: '특수 에너지' },
+    { id: 'SUPPORTER', name: '서포터'},
+    { id: 'POKEMON_TOOL', name: '포켓몬 도구'},
+    { id: 'STADIUM', name: '스타디움'},
+    { id: 'ITEM', name: '아이템'}
 ];
 
 // [추가] 검색 필터용 상수 정의

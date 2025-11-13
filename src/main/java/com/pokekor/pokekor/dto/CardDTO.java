@@ -19,7 +19,8 @@ public class CardDTO {
 
     // [추가] 카드 유형 및 속성 필드
     private String cardType;
-    private String cardAttribute;
+    private String cardAttribute1;
+    private String cardAttribute2;
     // [수정] boolean isCollected -> List<String> collectedInColors
     private List<CollectionInfoDTO> collections = new ArrayList<>(); // 빈 리스트로 초기화
 
@@ -37,7 +38,8 @@ public class CardDTO {
 
         // [추가] 유형 및 속성 매핑
         this.cardType = card.getCardType();
-        this.cardAttribute = card.getCardAttribute();
+        this.cardAttribute1 = card.getCardAttribute1();
+        this.cardAttribute2 = card.getCardAttribute2();
 
         if (card.getPack() != null) {
             this.packName = card.getPack().getPackNameKo();

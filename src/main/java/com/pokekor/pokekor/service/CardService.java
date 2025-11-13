@@ -26,7 +26,7 @@ public class CardService {
     private final CardRepository cardRepository;
     private final CollectedCardRepository collectedCardRepository;
 
-    // [수정] cardType, cardAttribute 파라미터 추가
+    // [수정] cardAttribute 파라미터를 1개로 변경
     public List<CardDTO> searchCards(String username, Long packId, String cardName, String rarityId, String cardType, String cardAttribute) {
 
         // 1. 수집 정보 조회 (기존 로직과 동일)
@@ -49,7 +49,7 @@ public class CardService {
                     ));
         }
 
-        // 2. [수정] 검색 조건(Specification) 생성 (CardSpecification에 새 파라미터 전달)
+        // 2. [수정] 검색 조건(Specification) 생성 (CardSpecification에 파라미터 전달)
         Specification<Card> spec = CardSpecification.search(cardName, packId, rarityId, cardType, cardAttribute);
 
         // 3. [수정] JpaSpecificationExecutor의 기본 findAll(spec) 메서드를 호출

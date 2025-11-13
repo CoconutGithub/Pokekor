@@ -17,7 +17,7 @@ import java.util.List;
  */
 public class CardSpecification {
 
-    // [수정] cardType, cardAttribute 파라미터 추가
+    // [수정] cardAttribute 파라미터를 1개로 변경
     public static Specification<Card> search(String cardName, Long packId, String rarityId, String cardType, String cardAttribute) {
 
         return (root, query, cb) -> {
@@ -58,9 +58,15 @@ public class CardSpecification {
                 predicates.add(cb.equal(root.get("cardType"), cardType));
             }
 
-            // [추가] 2-5. 카드 속성 (cardAttribute) 필터
+            // [수정] 2-5. 카드 속성 (cardAttribute) 필터
             if (StringUtils.hasText(cardAttribute)) {
-                predicates.add(cb.equal(root.get("cardAttribute"), cardAttribute));
+                // cardAttribute 변수(예: 'FIRE') 하나로
+                // cardAttribute1 컬럼과 cardAttribute2 컬럼을 모두 OR 조건으로 검색
+                Predicate attrPredicate = cb.or(
+                        cb.equal(root.get("cardAttribute1"), cardAttribute),
+                        cb.equal(root.get("cardAttribute2"), cardAttribute)
+                );
+                predicates.add(attrPredicate);
             }
 
 

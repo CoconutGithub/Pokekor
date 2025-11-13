@@ -4,17 +4,17 @@ import { useAuth } from '../App';
 import type { CardDTO, CollectionCategoryDTO, CollectionInfoDTO, PackDTO, RarityDTO } from '../types'; // [수정]
 import { useSearchParams, Link } from 'react-router-dom';
 
-// [추가] 검색 필터용 상수 정의
-// (나중에 API로 대체 가능)
+// [수정] CARD_TYPES 상수 수정
 const CARD_TYPES = [
     { id: 'POKEMON', name: '포켓몬' },
-    { id: 'TRAINER', name: '트레이너' },
+    // [수정] '트레이너스'를 아래의 4가지 세부 타입으로 분리
+    // { id: 'TRAINER', name: '트레이너스' },
+    { id: 'SUPPORTER', name: '서포터' }, // [추가]
+    { id: 'POKEMON_TOOL', name: '포켓몬 도구' }, // [추가]
+    { id: 'ITEM', name: '아이템' }, // [추가] (트레이너스의 다른 종류)
+    { id: 'STADIUM', name: '스타디움' }, // [추가] (트레이너스의 다른 종류)
     { id: 'BASIC_ENERGY', name: '기본 에너지' },
     { id: 'SPECIAL_ENERGY', name: '특수 에너지' },
-    { id: 'SUPPORTER', name: '서포터'},
-    { id: 'POKEMON_TOOL', name: '포켓몬 도구'},
-    { id: 'STADIUM', name: '스타디움'},
-    { id: 'ITEM', name: '아이템'}
 ];
 
 // [추가] 검색 필터용 상수 정의
@@ -86,7 +86,7 @@ export const CardListPage = () => {
                         name: cardName || undefined,
                         rarityId: rarityId || undefined,
                         type: cardType || undefined, // [추가]
-                        attribute: cardAttribute || undefined // [추가]
+                        attribute: cardAttribute || undefined // [추가] (이 값 하나로 백엔드가 2개 컬럼 검색)
                     }
                 });
 
@@ -345,6 +345,7 @@ export const CardListPage = () => {
                                 style={{ width: '100%', padding: '8px' }}
                             >
                                 <option value="">전체 유형</option>
+                                {/* [수정] CARD_TYPES 상수를 사용하도록 변경 */}
                                 {CARD_TYPES.map(t => (
                                     <option key={t.id} value={t.id}>{t.name}</option>
                                 ))}
@@ -363,6 +364,8 @@ export const CardListPage = () => {
                                 style={{
                                     width: '100%',
                                     padding: '8px',
+                                    // [수정] 강제로 배경색을 지정하던 (backgroundColor: ...) 스타일 속성을 제거했습니다.
+                                    // 이제 비활성화(disabled) 상태일 때 브라우저/테마의 기본 스타일(예: 다크모드에서 어두운 배경)을 따릅니다.
                                 }}
                             >
                                 <option value="">전체 속성</option>
@@ -494,11 +497,24 @@ export const CardListPage = () => {
                             <p style={{ margin: 0, fontSize: '12px', color: '#777' }}>
                                 {card.rarityId} ({card.cardNumberInPack})
                             </p>
-                            {/* [추가] 카드 유형 및 속성 표시 */}
+                            {/* [수정] 카드 유형 및 이중 속성 표시 로직 */}
                             <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#333' }}>
-                                {card.cardType === 'POKEMON' && card.cardAttribute ?
-                                    `${card.cardAttribute} ${card.cardType}` : // 예: "불 포켓몬"
-                                    card.cardType // 예: "트레이너스"
+                                {
+                                    (() => {
+                                        // DTO에서 한글 이름 찾기
+                                        const typeName = CARD_TYPES.find(t => t.id === card.cardType)?.name || card.cardType;
+                                        const attr1Name = CARD_ATTRIBUTES.find(a => a.id === card.cardAttribute1)?.name;
+                                        const attr2Name = CARD_ATTRIBUTES.find(a => a.id === card.cardAttribute2)?.name;
+
+                                        if (card.cardType === 'POKEMON') {
+                                            let attributes = '';
+                                            if (attr1Name) attributes += attr1Name;
+                                            if (attr2Name) attributes += ` / ${attr2Name}`; // [수정] 이중 속성 표시
+
+                                            return `${attributes} ${typeName}`; // 예: "불 / 물 포켓몬"
+                                        }
+                                        return typeName; // 예: "서포터"
+                                    })()
                                 }
                             </p>
                         </div>

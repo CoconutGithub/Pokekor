@@ -13,7 +13,8 @@ export interface CardDTO {
     collections: CollectionInfoDTO[];
     // [추가] 카드 유형 및 속성
     cardType: string;
-    cardAttribute?: string; // 포켓몬이 아닌 경우 없을 수 있음
+    cardAttribute1?: string; // 포켓몬이 아닌 경우 없을 수 있음
+    cardAttribute2?: string;
 }
 
 /**

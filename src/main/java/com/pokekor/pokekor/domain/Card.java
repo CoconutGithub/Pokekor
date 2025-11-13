@@ -31,8 +31,10 @@ public class Card {
     private String cardType;
 
     // [추가] 카드 속성 (GRASS, FIRE, WATER, COLORLESS 등. 포켓몬이 아닌 경우 null)
-    @Column(name = "card_attribute", length = 50)
-    private String cardAttribute;
+    @Column(name = "card_attribute1", length = 50)
+    private String cardAttribute1;
+    @Column(name = "card_attribute2", length = 50)
+    private String cardAttribute2;
 
     // N:1 관계 (카드는 하나의 팩에 속함)
     @ManyToOne(fetch = FetchType.LAZY) // LAZY: 성능 최적화를 위해 필요할 때만 Pack 정보를 로드

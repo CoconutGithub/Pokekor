@@ -19,7 +19,6 @@ import java.util.List;
 public class CardController {
 
     private final CardService cardService;
-
     /**
      * [수정됨] 카드 검색 API (다중 필터링 지원)
      * GET /api/cards
@@ -49,7 +48,7 @@ public class CardController {
         // 1. username 추출
         String username = (userDetails != null) ? userDetails.getUsername() : null;
 
-        // 2. [수정] 서비스에 모든 파라미터 전달
+        // 2. [수정] 서비스에 모든 파라미터 전달 (cardAttribute가 1개로 전달됨)
         List<CardDTO> cards = cardService.searchCards(username, packId, cardName, rarityId, cardType, cardAttribute);
 
         return ResponseEntity.ok(cards);
